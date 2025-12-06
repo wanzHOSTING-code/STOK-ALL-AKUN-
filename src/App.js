@@ -3,6 +3,13 @@ import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 
+/* ===== ADMIN ACCOUNT ===== */
+const ADMIN = {
+  username: "admin",
+  password: "123456",
+};
+
+/* ===== SELLER WA ===== */
 const sellers = {
   WANZ: "62881027154473",
   GIO: "6285715635425",
@@ -10,21 +17,22 @@ const sellers = {
 };
 
 export default function App() {
-  // === ADMIN LOGIN STATE ===
+  /* ===== ADMIN LOGIN STATE ===== */
   const [isAdmin, setIsAdmin] = useState(
     localStorage.getItem("admin") === "true"
   );
+  const [showAdmin, setShowAdmin] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  // === ACCOUNT STATE ===
+  /* ===== ACCOUNT STATE ===== */
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
   const [seller, setSeller] = useState("DAEN");
   const [list, setList] = useState([]);
 
-  // === FETCH FIRESTORE ===
+  /* ===== FIRESTORE FETCH ===== */
   const fetchData = async () => {
     const snap = await getDocs(collection(db, "accounts"));
     const data = snap.docs.map((d) => ({
@@ -38,11 +46,12 @@ export default function App() {
     fetchData();
   }, []);
 
-  // === LOGIN ===
+  /* ===== ADMIN LOGIN ===== */
   const loginAdmin = () => {
     if (username === ADMIN.username && password === ADMIN.password) {
       setIsAdmin(true);
       localStorage.setItem("admin", "true");
+      setShowAdmin(false);
       alert("Login admin berhasil");
     } else {
       alert("Username / password salah");
@@ -54,7 +63,7 @@ export default function App() {
     localStorage.removeItem("admin");
   };
 
-  // === TAMBAH DATA ===
+  /* ===== ADD DATA ===== */
   const tambah = async () => {
     if (!game || !detail || !harga) return alert("Lengkapi data!");
 
@@ -82,39 +91,65 @@ export default function App() {
 
   return (
     <>
+      {/* ===== HEADER ===== */}
       <header>
         <img src="/logo.png" alt="logo" />
-        <h1>
-          STOK AKUN<br />
-          WANZ × DAEN × GIO
-        </h1>
+        <div>
+          <h1>
+            STOK AKUN<br />
+            WANZ × DAEN × GIO
+          </h1>
+          <small
+            className="admin-link"
+            onClick={() => setShowAdmin(true)}
+          >
+            admin
+          </small>
+        </div>
       </header>
 
-      {/* === LOGIN ADMIN === */}
-      {!isAdmin && (
-        <div className="admin-login">
-          <h2>ADMIN LOGIN</h2>
-          <input
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button onClick={loginAdmin}>LOGIN</button>
+      {/* ===== ADMIN LOGIN MODAL ===== */}
+      {showAdmin && !isAdmin && (
+        <div className="admin-modal">
+          <div className="admin-login">
+            <h2>ADMIN LOGIN</h2>
+
+            <input
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <button onClick={loginAdmin}>LOGIN</button>
+          </div>
         </div>
       )}
 
-      {/* === FORM TAMBAH (ADMIN ONLY) === */}
+      {/* ===== ADMIN FORM ===== */}
       {isAdmin && (
         <div className="form">
-          <input placeholder="Game" value={game} onChange={(e) => setGame(e.target.value)} />
-          <input placeholder="Detail akun" value={detail} onChange={(e) => setDetail(e.target.value)} />
-          <input placeholder="Harga" value={harga} onChange={(e) => setHarga(e.target.value)} />
+          <input
+            placeholder="Game"
+            value={game}
+            onChange={(e) => setGame(e.target.value)}
+          />
+          <input
+            placeholder="Detail akun"
+            value={detail}
+            onChange={(e) => setDetail(e.target.value)}
+          />
+          <input
+            placeholder="Harga"
+            value={harga}
+            onChange={(e) => setHarga(e.target.value)}
+          />
 
           <select value={seller} onChange={(e) => setSeller(e.target.value)}>
             <option>DAEN</option>
@@ -123,14 +158,19 @@ export default function App() {
           </select>
 
           <button onClick={tambah}>+ TAMBAH</button>
-          <button className="logout" onClick={logoutAdmin}>LOGOUT</button>
+          <button className="logout" onClick={logoutAdmin}>
+            LOGOUT
+          </button>
         </div>
       )}
 
+      {/* ===== LIST ===== */}
       <div className="list">
         {list.map((item) => (
           <div className="card" key={item.id}>
-            <span className={`badge ${item.seller}`}>{item.seller}</span>
+            <span className={`badge ${item.seller}`}>
+              {item.seller}
+            </span>
             <h3>{item.game}</h3>
             <p>{item.detail}</p>
             <p className="price">Rp {item.harga}</p>
@@ -142,4 +182,4 @@ export default function App() {
       </div>
     </>
   );
-          }
+      }
