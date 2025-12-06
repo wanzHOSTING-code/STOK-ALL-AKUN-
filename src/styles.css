@@ -127,3 +127,48 @@ header h1 {
   box-shadow: 0 0 20px #ffc400;
   transform: scale(1.03);
 }
+
+.login {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle, #121f5f, #050814);
+}
+
+.login h2 {
+  color: #fff;
+}
+
+.login select,
+.login input {
+  padding: 10px;
+  width: 220px;
+  border-radius: 10px;
+  border: none;
+}
+
+.login button {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #2ee6a6, #00b8ff);
+  font-weight: bold;
+}
+
+.viewer button {
+  margin-top: 10px;
+  background: #444;
+  color: #fff;
+}
+
+.logout {
+  margin-left: auto;
+  background: red;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
