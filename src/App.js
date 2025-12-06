@@ -1,20 +1,15 @@
 import "./styles.css";
 import { useState, useEffect } from "react";
-import { db, storage } from "./firebase";
+import { db, storage, auth } from "./firebase";
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
-const sellers = {
-  WANZ: { phone: "62881027154473", pass: "wanz123" },
-  DAEN: { phone: "6283133581399", pass: "daen123" },
-  GIO:  { phone: "6285715635425", pass: "gio123" },
-};
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 export default function App() {
   const [loginAs, setLoginAs] = useState("BUYER"); // default buyer
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(""); // pilih role sebelum login
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
@@ -39,67 +34,48 @@ export default function App() {
     fetchData();
   }, []);
 
-  // Login seller
-  const login = () => {
-    if (!sellers[selectedRole] || password !== sellers[selectedRole].pass) {
-      alert("Login gagal");
-      return;
+  // Login seller pakai Firebase Auth
+  const login = async () => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      setLoginAs(userCredential.user.email); // pakai email sebagai identitas seller
+      setShowLoginForm(false);
+      setEmail("");
+      setPassword("");
+      alert(`Login sebagai ${userCredential.user.email}`);
+    } catch (err) {
+      console.error("Login gagal:", err);
+      alert("Login gagal! Cek email & password.");
     }
-    setLoginAs(selectedRole);
-    setShowLoginForm(false);
-    setPassword("");
-    setSelectedRole("");
-    alert(`Login sebagai ${selectedRole}`);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut(auth);
     setLoginAs("BUYER");
+    setEmail("");
     setPassword("");
-    setSelectedRole("");
-  };
-
-  // Handle file input
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setFotoFile(file);
-    const reader = new FileReader();
-    reader.onload = () => setFotoPreview(reader.result);
-    reader.readAsDataURL(file);
   };
 
   // Tambah akun
   const tambah = async () => {
     if (!game || !detail || !harga) return alert("Lengkapi data!");
-
     let fotoURL = "";
     if (fotoFile) {
-      try {
-        const storageRef = ref(storage, `accounts/${Date.now()}_${fotoFile.name}`);
-        await uploadBytes(storageRef, fotoFile);
-        fotoURL = await getDownloadURL(storageRef);
-      } catch (err) {
-        console.error("Gagal upload gambar:", err);
-        alert("Gagal upload gambar");
-        return;
-      }
+      const storageRef = ref(storage, `accounts/${Date.now()}_${fotoFile.name}`);
+      await uploadBytes(storageRef, fotoFile);
+      fotoURL = await getDownloadURL(storageRef);
     }
-
     const newItem = { game, detail, harga, seller: loginAs, sold: false, foto: fotoURL };
-
     try {
       const docRef = await addDoc(collection(db, "accounts"), newItem);
       setList([{ id: docRef.id, ...newItem }, ...list]);
+      setGame(""); setDetail(""); setHarga(""); setFotoFile(null); setFotoPreview("");
     } catch (err) {
       console.error("Gagal menambah akun:", err);
       alert("Gagal menambah akun");
-      return;
     }
-
-    setGame(""); setDetail(""); setHarga(""); setFotoFile(null); setFotoPreview("");
   };
 
-  // Tandai sold
   const markSold = async (id) => {
     try {
       await updateDoc(doc(db, "accounts", id), { sold: true });
@@ -109,7 +85,6 @@ export default function App() {
     }
   };
 
-  // Hapus akun
   const hapus = async (id) => {
     if (!window.confirm("Hapus stok ini?")) return;
     try {
@@ -120,14 +95,10 @@ export default function App() {
     }
   };
 
-  // Buy akun (WhatsApp)
   const buy = (item) => {
     if (item.sold) return;
     const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
-    window.open(
-      `https://wa.me/${sellers[item.seller].phone}?text=${encodeURIComponent(msg)}`,
-      "_blank"
-    );
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   if (loading) return <div style={{ padding: "20px" }}>Loading...</div>;
@@ -138,36 +109,18 @@ export default function App() {
     <>
       <header>
         <img src="/logo.png" alt="logo" />
-        <h1>
-          STOK AKUN<br />WANZ × DAEN × GIO
-        </h1>
-        {!isSeller && (
-          <button className="logout" onClick={() => setShowLoginForm(!showLoginForm)}>ADMIN</button>
-        )}
+        <h1>STOK AKUN<br />WANZ × DAEN × GIO</h1>
+        {!isSeller && <button className="logout" onClick={() => setShowLoginForm(!showLoginForm)}>ADMIN</button>}
         {isSeller && <button className="logout" onClick={logout}>LOGOUT</button>}
       </header>
 
-      {/* Form login admin/seller */}
+      {/* Form login */}
       {showLoginForm && !isSeller && (
         <div className="login adminLogin">
-          <img src="/logo.png" alt="logo" style={{
-            width: "80px", height: "80px", borderRadius: "50%", border: "3px solid #5fa8ff", marginBottom: "12px"
-          }} />
-          <select onChange={(e) => setSelectedRole(e.target.value)} value={selectedRole}>
-            <option value="">Pilih Role</option>
-            <option>WANZ</option>
-            <option>DAEN</option>
-            <option>GIO</option>
-          </select>
-          {selectedRole && (
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          )}
-          {selectedRole && <button onClick={login}>MASUK</button>}
+          <img src="/logo.png" alt="logo" style={{ width:"80px", height:"80px", borderRadius:"50%", border:"3px solid #5fa8ff", marginBottom:"12px" }} />
+          <input type="email" placeholder="Email" value={email} onChange={(e)=>setEmail(e.target.value)} />
+          <input type="password" placeholder="Password" value={password} onChange={(e)=>setPassword(e.target.value)} />
+          <button onClick={login}>MASUK</button>
         </div>
       )}
 
@@ -177,11 +130,14 @@ export default function App() {
           <input placeholder="Game" value={game} onChange={(e)=>setGame(e.target.value)} />
           <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
           <input placeholder="Harga" value={harga} onChange={(e)=>setHarga(e.target.value)} />
-          <input 
-            type="file" 
-            accept="image/*" 
-            onChange={handleFileChange}
-          />
+          <input type="file" accept="image/*" onChange={(e)=>{
+            const file = e.target.files[0];
+            if (!file) return;
+            setFotoFile(file);
+            const reader = new FileReader();
+            reader.onload = ()=>setFotoPreview(reader.result);
+            reader.readAsDataURL(file);
+          }} />
           {fotoPreview && <img src={fotoPreview} alt="Preview" className="cardPreview" />}
           <button onClick={tambah}>+ TAMBAH</button>
         </div>
@@ -209,4 +165,4 @@ export default function App() {
       </div>
     </>
   );
-}
+        }
