@@ -1,7 +1,8 @@
 import "./styles.css";
 import { useState, useEffect } from "react";
-import { db } from "./firebase";
+import { db, storage } from "./firebase";
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const sellers = {
   WANZ: { phone: "62881027154473", pass: "wanz123" },
@@ -17,7 +18,8 @@ export default function App() {
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
-  const [fotoLink, setFotoLink] = useState(""); // link gambar
+  const [fotoFile, setFotoFile] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState("");
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,29 +58,45 @@ export default function App() {
     setSelectedRole("");
   };
 
+  // Handle file input
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setFotoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setFotoPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
   // Tambah akun
   const tambah = async () => {
     if (!game || !detail || !harga) return alert("Lengkapi data!");
 
-    const newItem = {
-      game,
-      detail,
-      harga,
-      seller: loginAs,
-      sold: false,
-      foto: fotoLink || "", // pakai link
-    };
+    let fotoURL = "";
+    if (fotoFile) {
+      try {
+        const storageRef = ref(storage, `accounts/${Date.now()}_${fotoFile.name}`);
+        await uploadBytes(storageRef, fotoFile);
+        fotoURL = await getDownloadURL(storageRef);
+      } catch (err) {
+        console.error("Gagal upload gambar:", err);
+        alert("Gagal upload gambar");
+        return;
+      }
+    }
 
-    console.log("Item akan ditambahkan:", newItem); // debug
+    const newItem = { game, detail, harga, seller: loginAs, sold: false, foto: fotoURL };
 
     try {
       const docRef = await addDoc(collection(db, "accounts"), newItem);
       setList([{ id: docRef.id, ...newItem }, ...list]);
-      setGame(""); setDetail(""); setHarga(""); setFotoLink("");
     } catch (err) {
       console.error("Gagal menambah akun:", err);
       alert("Gagal menambah akun");
+      return;
     }
+
+    setGame(""); setDetail(""); setHarga(""); setFotoFile(null); setFotoPreview("");
   };
 
   // Tandai sold
@@ -159,7 +177,12 @@ export default function App() {
           <input placeholder="Game" value={game} onChange={(e)=>setGame(e.target.value)} />
           <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
           <input placeholder="Harga" value={harga} onChange={(e)=>setHarga(e.target.value)} />
-          <input placeholder="Link Gambar (opsional)" value={fotoLink} onChange={(e)=>setFotoLink(e.target.value)} />
+          <input 
+            type="file" 
+            accept="image/*" 
+            onChange={handleFileChange}
+          />
+          {fotoPreview && <img src={fotoPreview} alt="Preview" className="cardPreview" />}
           <button onClick={tambah}>+ TAMBAH</button>
         </div>
       )}
@@ -186,4 +209,4 @@ export default function App() {
       </div>
     </>
   );
-        }
+}
