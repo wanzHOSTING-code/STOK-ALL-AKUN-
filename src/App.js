@@ -1,58 +1,87 @@
+import "./styles.css";
 import { useState } from "react";
 
-const SELLERS = {
-  seller1: { name: "DAEN STORE", phone: "62881027154473" },
-  seller2: { name: "GIO STORE", phone: "6285715635425" },
-  seller3: { name: "WANZ STORE", phone: "6283133581399" }
+const sellers = {
+  DAEN: "6283133581399",
+  GIO: "6285715635425",
+  WANZ: "62881027154473",
 };
 
 export default function App() {
-  const [items, setItems] = useState([]);
   const [game, setGame] = useState("");
-  const [desc, setDesc] = useState("");
-  const [price, setPrice] = useState("");
-  const [seller, setSeller] = useState("seller1");
+  const [detail, setDetail] = useState("");
+  const [harga, setHarga] = useState("");
+  const [seller, setSeller] = useState("DAEN");
+  const [list, setList] = useState([]);
 
-  const addItem = () => {
-    setItems([...items, {
-      id: Date.now(),
-      game, desc, price, seller
-    }]);
-    setGame(""); setDesc(""); setPrice("");
+  const tambah = () => {
+    if (!game || !detail || !harga) return alert("Lengkapi data!");
+
+    setList([
+      ...list,
+      { game, detail, harga, seller },
+    ]);
+
+    setGame("");
+    setDetail("");
+    setHarga("");
+  };
+
+  const buy = (item) => {
+    const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 Game: ${item.game}\n📌 Detail: ${item.detail}\n💰 Harga: ${item.harga}`;
+    window.open(
+      `https://wa.me/${sellers[item.seller]}?text=${encodeURIComponent(msg)}`,
+      "_blank"
+    );
   };
 
   return (
-    <div className="wrap">
-      <header className="top">
-        <img src="/logo.png" />
-        <h1>STOK AKUN WANZ × DAEN × GIO</h1>
+    <>
+      <header>
+        <img src="/logo.png" alt="logo" />
+        <h1>
+          STOK AKUN<br />
+          WANZ × DAEN × GIO
+        </h1>
       </header>
 
-      <div className="panel">
-        <input placeholder="Game" value={game} onChange={e=>setGame(e.target.value)} />
-        <input placeholder="Detail" value={desc} onChange={e=>setDesc(e.target.value)} />
-        <input placeholder="Harga" value={price} onChange={e=>setPrice(e.target.value)} />
-        <select onChange={e=>setSeller(e.target.value)}>
-          <option value="seller1">DAEN</option>
-          <option value="seller2">GIO</option>
-          <option value="seller3">WANZ</option>
+      <div className="form">
+        <input
+          placeholder="Game"
+          value={game}
+          onChange={(e) => setGame(e.target.value)}
+        />
+        <input
+          placeholder="Detail akun"
+          value={detail}
+          onChange={(e) => setDetail(e.target.value)}
+        />
+        <input
+          placeholder="Harga"
+          value={harga}
+          onChange={(e) => setHarga(e.target.value)}
+        />
+        <select value={seller} onChange={(e) => setSeller(e.target.value)}>
+          <option>DAEN</option>
+          <option>GIO</option>
+          <option>WANZ</option>
         </select>
-        <button onClick={addItem}>Tambah</button>
+        <button onClick={tambah}>+ TAMBAH</button>
       </div>
 
-      <div className="grid">
-        {items.map(i=>(
-          <div className="card" key={i.id}>
-            <h3>{i.game}</h3>
-            <p>{i.desc}</p>
-            <b>{i.price}</b>
-            <a target="_blank"
-              href={`https://wa.me/${SELLERS[i.seller].phone}?text=Saya minat akun ${i.game}`}>
-              BUY
-            </a>
+      <div className="list">
+        {list.map((item, i) => (
+          <div className="card" key={i}>
+            <span className={`badge ${item.seller}`}>{item.seller}</span>
+            <h3>{item.game}</h3>
+            <p>{item.detail}</p>
+            <p className="price">Rp {item.harga}</p>
+            <button className="buy" onClick={() => buy(item)}>
+              BELI AKUN 🔥
+            </button>
           </div>
         ))}
       </div>
-    </div>
+    </>
   );
-    }
+}
