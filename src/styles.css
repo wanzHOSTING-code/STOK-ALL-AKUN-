@@ -213,3 +213,43 @@ header h1 {
   font-weight: bold;
   color: #fff;
 }
+
+.login {
+  position: absolute;
+  top: 80px; /* tepat di bawah header */
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0d173a;
+  padding: 15px 20px;
+  border-radius: 12px;
+  border: 1px solid #2f4fb8;
+  box-shadow: 0 0 20px rgba(77,163,255,.3);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 1000;
+}
+
+.login select,
+.login input {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #2f4fb8;
+  background: #0d173a;
+  color: #fff;
+  font-size: 13px;
+}
+
+.login button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #2ee6a6, #00b8ff);
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.login button:hover {
+  box-shadow: 0 0 12px #00ffd5;
+}
