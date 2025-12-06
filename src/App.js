@@ -1,223 +1,188 @@
 import "./styles.css";
 import { useEffect, useState } from "react";
-import { db } from "./firebase";
+import { db, storage } from "./firebase";
 import {
   collection,
   addDoc,
   getDocs,
-  doc,
-  deleteDoc,
   updateDoc,
+  deleteDoc,
+  doc
 } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // === SELLER WHATSAPP ===
-const sellers = {
+const sellersWA = {
   WANZ: "62881027154473",
-  GIO: "6285715635425",
   DAEN: "6283133581399",
+  GIO: "6285715635425"
 };
 
-// === ADMIN LOGIN ===
-const ADMIN = {
-  username: "admin",
-  password: "admin123",
-};
+// === LOGIN DATA ===
+const ADMIN = { username: "admin", password: "admin123" };
 
-// === SELLER LOGIN ===
-const SELLER_LOGIN = {
-  WANZ: "wanz123",
-  DAEN: "daen123",
-  GIO: "gio123",
+const SELLERS_LOGIN = {
+  wanz: { password: "123", name: "WANZ" },
+  daen: { password: "123", name: "DAEN" },
+  gio: { password: "123", name: "GIO" }
 };
 
 export default function App() {
-  // === ADMIN STATE ===
-  const [isAdmin, setIsAdmin] = useState(
-    localStorage.getItem("admin") === "true"
-  );
-  const [adminUser, setAdminUser] = useState("");
-  const [adminPass, setAdminPass] = useState("");
+  const [role, setRole] = useState(localStorage.getItem("role") || "");
+  const [sellerLogin, setSellerLogin] = useState(localStorage.getItem("seller") || "");
 
-  // === SELLER STATE ===
-  const [sellerLogin, setSellerLogin] = useState(
-    localStorage.getItem("seller") || ""
-  );
-  const [sellerPass, setSellerPass] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  // === DATA STATE ===
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
-  const [seller, setSeller] = useState("DAEN");
+  const [seller, setSeller] = useState("WANZ");
+  const [image, setImage] = useState(null);
+
   const [list, setList] = useState([]);
 
-  // === FETCH DATA ===
   const fetchData = async () => {
     const snap = await getDocs(collection(db, "accounts"));
-    const data = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
-    setList(data);
+    setList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  // === ADMIN LOGIN ===
-  const loginAdmin = () => {
-    if (adminUser === ADMIN.username && adminPass === ADMIN.password) {
-      setIsAdmin(true);
-      localStorage.setItem("admin", "true");
-      alert("Admin login berhasil");
-    } else {
-      alert("Login admin gagal");
+  // === LOGIN ===
+  const login = () => {
+    if (username === ADMIN.username && password === ADMIN.password) {
+      setRole("admin");
+      localStorage.setItem("role", "admin");
+      return;
     }
-  };
 
-  const logoutAdmin = () => {
-    setIsAdmin(false);
-    localStorage.removeItem("admin");
-  };
-
-  // === SELLER LOGIN ===
-  const loginSeller = () => {
-    if (SELLER_LOGIN[sellerLogin] === sellerPass) {
-      localStorage.setItem("seller", sellerLogin);
-      alert("Seller login berhasil");
-    } else {
-      alert("Login seller gagal");
+    const s = SELLERS_LOGIN[username];
+    if (s && s.password === password) {
+      setRole("seller");
+      setSellerLogin(s.name);
+      localStorage.setItem("role", "seller");
+      localStorage.setItem("seller", s.name);
+      return;
     }
+
+    alert("Login gagal");
   };
 
-  const logoutSeller = () => {
-    localStorage.removeItem("seller");
+  const logout = () => {
+    localStorage.clear();
+    setRole("");
     setSellerLogin("");
   };
 
-  // === TAMBAH DATA (ADMIN / SELLER) ===
+  // === TAMBAH AKUN ===
   const tambah = async () => {
-    if (!game || !detail || !harga) return alert("Lengkapi data!");
+    if (!game || !detail || !harga) return alert("Lengkapi data");
+
+    let imageUrl = "";
+    if (image) {
+      const imgRef = ref(storage, `akun/${Date.now()}-${image.name}`);
+      await uploadBytes(imgRef, image);
+      imageUrl = await getDownloadURL(imgRef);
+    }
 
     await addDoc(collection(db, "accounts"), {
       game,
       detail,
       harga,
-      seller: isAdmin ? seller : sellerLogin,
-      sold: false,
+      seller: role === "admin" ? seller : sellerLogin,
+      image: imageUrl,
+      sold: false
     });
 
     setGame("");
     setDetail("");
     setHarga("");
+    setImage(null);
     fetchData();
   };
 
-  // === SOLD ===
-  const markSold = async (id) => {
+  // === ACTION ===
+  const tandaiSold = async (id) => {
     await updateDoc(doc(db, "accounts", id), { sold: true });
     fetchData();
   };
 
-  // === DELETE ===
-  const deleteItem = async (id) => {
-    if (!window.confirm("Hapus akun ini?")) return;
-    await deleteDoc(doc(db, "accounts", id));
-    fetchData();
+  const hapus = async (id) => {
+    if (window.confirm("Hapus akun?")) {
+      await deleteDoc(doc(db, "accounts", id));
+      fetchData();
+    }
   };
 
-  // === BUY ===
   const buy = (item) => {
+    if (item.sold) return;
     const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
     window.open(
-      `https://wa.me/${sellers[item.seller]}?text=${encodeURIComponent(msg)}`,
+      `https://wa.me/${sellersWA[item.seller]}?text=${encodeURIComponent(msg)}`,
       "_blank"
     );
   };
 
-  // === FILTER LIST ===
-  const filteredList = isAdmin
-    ? list
-    : sellerLogin
-    ? list.filter((i) => i.seller === sellerLogin)
-    : list;
+  // === LOGIN PAGE ===
+  if (!role) {
+    return (
+      <div className="login">
+        <h2>LOGIN</h2>
+        <input placeholder="Username" onChange={e => setUsername(e.target.value)} />
+        <input type="password" placeholder="Password" onChange={e => setPassword(e.target.value)} />
+        <button onClick={login}>LOGIN</button>
+      </div>
+    );
+  }
 
   return (
     <>
       <header>
-        <h1>STOK AKUN</h1>
-        <p>WANZ × DAEN × GIO</p>
+        <img src="/logo.png" alt="logo" />
+        <h1>STOK AKUN<br />WANZ × DAEN × GIO</h1>
+        <button className="logout" onClick={logout}>LOGOUT</button>
       </header>
 
-      {/* === ADMIN LOGIN === */}
-      {!isAdmin && !sellerLogin && (
-        <div className="admin-login">
-          <h3>ADMIN LOGIN</h3>
-          <input placeholder="Username" onChange={(e) => setAdminUser(e.target.value)} />
-          <input type="password" placeholder="Password" onChange={(e) => setAdminPass(e.target.value)} />
-          <button onClick={loginAdmin}>LOGIN ADMIN</button>
-
-          <hr />
-
-          <h3>SELLER LOGIN</h3>
-          <select onChange={(e) => setSellerLogin(e.target.value)}>
-            <option value="">Pilih Seller</option>
-            <option>WANZ</option>
-            <option>DAEN</option>
-            <option>GIO</option>
-          </select>
-          <input type="password" placeholder="Password" onChange={(e) => setSellerPass(e.target.value)} />
-          <button onClick={loginSeller}>LOGIN SELLER</button>
-        </div>
-      )}
-
-      {/* === FORM TAMBAH === */}
-      {(isAdmin || sellerLogin) && (
+      {(role === "admin" || role === "seller") && (
         <div className="form">
-          <input placeholder="Game" value={game} onChange={(e) => setGame(e.target.value)} />
-          <input placeholder="Detail" value={detail} onChange={(e) => setDetail(e.target.value)} />
-          <input placeholder="Harga" value={harga} onChange={(e) => setHarga(e.target.value)} />
+          <input placeholder="Game" value={game} onChange={e => setGame(e.target.value)} />
+          <input placeholder="Detail" value={detail} onChange={e => setDetail(e.target.value)} />
+          <input placeholder="Harga" value={harga} onChange={e => setHarga(e.target.value)} />
+          <input type="file" onChange={e => setImage(e.target.files[0])} />
 
-          {isAdmin && (
-            <select value={seller} onChange={(e) => setSeller(e.target.value)}>
+          {role === "admin" && (
+            <select value={seller} onChange={e => setSeller(e.target.value)}>
+              <option>WANZ</option>
               <option>DAEN</option>
               <option>GIO</option>
-              <option>WANZ</option>
             </select>
           )}
 
-          <button onClick={tambah}>+ TAMBAH</button>
-
-          {isAdmin ? (
-            <button onClick={logoutAdmin}>LOGOUT ADMIN</button>
-          ) : (
-            <button onClick={logoutSeller}>LOGOUT SELLER</button>
-          )}
+          <button onClick={tambah}>+ TAMBAH AKUN</button>
         </div>
       )}
 
-      {/* === LIST === */}
       <div className="list">
-        {filteredList.map((item) => (
+        {list.map(item => (
           <div className="card" key={item.id}>
+            {item.image && <img src={item.image} alt="" />}
+            {item.sold && <div className="sold">SOLD</div>}
             <span className="badge">{item.seller}</span>
-            {item.sold && <span className="sold">SOLD</span>}
-
             <h3>{item.game}</h3>
             <p>{item.detail}</p>
             <p className="price">Rp {item.harga}</p>
 
-            {!item.sold && !isAdmin && !sellerLogin && (
-              <button onClick={() => buy(item)}>BELI 🔥</button>
+            {!item.sold && (
+              <button onClick={() => buy(item)}>BELI</button>
             )}
 
-            {(isAdmin || sellerLogin === item.seller) && (
-              <div className="admin-action">
-                {!item.sold && (
-                  <button onClick={() => markSold(item.id)}>✅ SOLD</button>
-                )}
-                <button onClick={() => deleteItem(item.id)}>🗑 DELETE</button>
+            {role === "admin" && (
+              <div className="admin-btn">
+                <button onClick={() => tandaiSold(item.id)}>SOLD</button>
+                <button onClick={() => hapus(item.id)}>DELETE</button>
               </div>
             )}
           </div>
@@ -225,4 +190,4 @@ export default function App() {
       </div>
     </>
   );
-  }
+}
