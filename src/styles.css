@@ -253,3 +253,11 @@ header h1 {
 .login button:hover {
   box-shadow: 0 0 12px #00ffd5;
 }
+
+.cardImg, .cardPreview {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  object-fit: cover;
+  max-height: 200px;
+}
