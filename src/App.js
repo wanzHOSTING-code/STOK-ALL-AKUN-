@@ -12,7 +12,8 @@ const sellers = {
 export default function App() {
   const [loginAs, setLoginAs] = useState("BUYER"); // default buyer
   const [password, setPassword] = useState("");
-  const [showLoginForm, setShowLoginForm] = useState(false); // toggle form admin
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(""); // pilih role sebelum login
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
@@ -37,17 +38,21 @@ export default function App() {
 
   // Login seller
   const login = () => {
-    if (!sellers[loginAs] || password !== sellers[loginAs].pass) {
+    if (!sellers[selectedRole] || password !== sellers[selectedRole].pass) {
       alert("Login gagal");
       return;
     }
-    alert(`Login sebagai ${loginAs}`);
-    setShowLoginForm(false); // tutup form setelah login
+    setLoginAs(selectedRole); // login berhasil
+    setShowLoginForm(false);
+    setPassword("");
+    setSelectedRole("");
+    alert(`Login sebagai ${selectedRole}`);
   };
 
   const logout = () => {
     setLoginAs("BUYER"); // kembali ke buyer
     setPassword("");
+    setSelectedRole("");
   };
 
   // Tambah akun
@@ -120,22 +125,37 @@ export default function App() {
         )}
       </header>
 
-      {/* Form login muncul di bawah header saat tombol ADMIN diklik */}
+      {/* Form login admin/seller muncul di bawah header */}
       {showLoginForm && !isSeller && (
         <div className="login">
-          <select onChange={(e) => setLoginAs(e.target.value)}>
+          {/* Logo di atas */}
+          <img src="/logo.png" alt="logo" style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            border: "2px solid #5fa8ff",
+            marginBottom: "8px"
+          }} />
+
+          <select onChange={(e) => setSelectedRole(e.target.value)} value={selectedRole}>
             <option value="">Pilih Role</option>
             <option>WANZ</option>
             <option>DAEN</option>
             <option>GIO</option>
           </select>
-          {loginAs && <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />}
-          {loginAs && <button onClick={login}>MASUK</button>}
+
+          {selectedRole && (
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
+
+          {selectedRole && (
+            <button onClick={login}>MASUK</button>
+          )}
         </div>
       )}
 
@@ -173,4 +193,4 @@ export default function App() {
       </div>
     </>
   );
-        }
+          }
