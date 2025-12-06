@@ -11,15 +11,14 @@ const sellers = {
 };
 
 export default function App() {
-  const [loginAs, setLoginAs] = useState("BUYER"); // default buyer
+  const [loginAs, setLoginAs] = useState("BUYER");
   const [password, setPassword] = useState("");
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(""); // pilih role sebelum login
+  const [selectedRole, setSelectedRole] = useState("");
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
-  const [fotoFile, setFotoFile] = useState(null);
-  const [fotoPreview, setFotoPreview] = useState("");
+  const [imageFile, setImageFile] = useState(null);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,6 +38,7 @@ export default function App() {
     fetchData();
   }, []);
 
+  // Login seller
   const login = () => {
     if (!sellers[selectedRole] || password !== sellers[selectedRole].pass) {
       alert("Login gagal");
@@ -57,29 +57,30 @@ export default function App() {
     setSelectedRole("");
   };
 
+  // Tambah akun
   const tambah = async () => {
-    if (!game || !detail || !harga) return alert("Lengkapi data!");
-
-    let fotoURL = "";
-    if (fotoFile) {
-      const storageRef = ref(storage, `accounts/${Date.now()}_${fotoFile.name}`);
-      await uploadBytes(storageRef, fotoFile);
-      fotoURL = await getDownloadURL(storageRef);
+    if (!game || !detail || !harga || !imageFile) {
+      return alert("Lengkapi semua data dan pilih gambar!");
     }
 
-    const newItem = { game, detail, harga, seller: loginAs, sold: false, foto: fotoURL };
-
     try {
+      // Upload gambar ke Firebase Storage
+      const imageRef = ref(storage, `akunImages/${Date.now()}_${imageFile.name}`);
+      await uploadBytes(imageRef, imageFile);
+      const imageUrl = await getDownloadURL(imageRef);
+
+      const newItem = { game, detail, harga, seller: loginAs, sold: false, imageUrl };
       const docRef = await addDoc(collection(db, "accounts"), newItem);
       setList([{ id: docRef.id, ...newItem }, ...list]);
+
+      setGame(""); setDetail(""); setHarga(""); setImageFile(null);
     } catch (err) {
       console.error("Gagal menambah akun:", err);
       alert("Gagal menambah akun");
     }
-
-    setGame(""); setDetail(""); setHarga(""); setFotoFile(null); setFotoPreview("");
   };
 
+  // Tandai sold
   const markSold = async (id) => {
     try {
       await updateDoc(doc(db, "accounts", id), { sold: true });
@@ -89,6 +90,7 @@ export default function App() {
     }
   };
 
+  // Hapus akun
   const hapus = async (id) => {
     if (!window.confirm("Hapus stok ini?")) return;
     try {
@@ -99,6 +101,7 @@ export default function App() {
     }
   };
 
+  // Buy akun (WhatsApp)
   const buy = (item) => {
     if (item.sold) return;
     const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
@@ -116,20 +119,26 @@ export default function App() {
     <>
       <header>
         <img src="/logo.png" alt="logo" />
-        <h1>
-          STOK AKUN<br />WANZ × DAEN × GIO
-        </h1>
+        <h1>STOK AKUN<br />WANZ × DAEN × GIO</h1>
         {!isSeller && (
-          <button className="logout" onClick={() => setShowLoginForm(!showLoginForm)}>ADMIN</button>
+          <button className="logout" onClick={() => setShowLoginForm(!showLoginForm)}>
+            ADMIN
+          </button>
         )}
-        {isSeller && <button className="logout" onClick={logout}>LOGOUT</button>}
+        {isSeller && (
+          <button className="logout" onClick={logout}>LOGOUT</button>
+        )}
       </header>
 
-      {/* Form login admin/seller */}
+      {/* Form login admin */}
       {showLoginForm && !isSeller && (
         <div className="login adminLogin">
-          <img src="/logo.png" alt="logo" className="loginLogo" style={{
-            width: "80px", height: "80px", borderRadius: "50%", border: "3px solid #5fa8ff", marginBottom: "12px"
+          <img src="/logo.png" alt="logo" style={{
+            width: "80px",
+            height: "80px",
+            borderRadius: "50%",
+            border: "3px solid #5fa8ff",
+            marginBottom: "12px"
           }} />
           <select onChange={(e) => setSelectedRole(e.target.value)} value={selectedRole}>
             <option value="">Pilih Role</option>
@@ -145,44 +154,36 @@ export default function App() {
               onChange={(e) => setPassword(e.target.value)}
             />
           )}
-          {selectedRole && <button onClick={login}>MASUK</button>}
+          {selectedRole && (
+            <button onClick={login}>MASUK</button>
+          )}
         </div>
       )}
 
-      {/* Form tambah akun */}
+      {/* Form tambah akun hanya untuk seller */}
       {isSeller && (
         <div className="form">
           <input placeholder="Game" value={game} onChange={(e)=>setGame(e.target.value)} />
           <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
           <input placeholder="Harga" value={harga} onChange={(e)=>setHarga(e.target.value)} />
-          <input 
-            type="file" 
-            accept="image/*" 
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (!file) return;
-              setFotoFile(file);
-              const reader = new FileReader();
-              reader.onload = () => setFotoPreview(reader.result);
-              reader.readAsDataURL(file);
-            }}
-          />
-          {fotoPreview && <img src={fotoPreview} alt="Preview" className="cardPreview" />}
+          <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
           <button onClick={tambah}>+ TAMBAH</button>
         </div>
       )}
 
-      {/* List akun */}
+      {/* List akun tampil untuk semua */}
       <div className="list">
         {list.map((item)=>(
           <div className={`card ${item.sold ? "sold" : ""}`} key={item.id}>
-            {item.foto && <img src={item.foto} alt={item.game} className="cardImg" />}
             <span className={`badge ${item.seller}`}>{item.seller}</span>
+            {item.imageUrl && <img src={item.imageUrl} alt={item.game} style={{ width: "100%", borderRadius: "12px", marginBottom: "8px" }} />}
             <h3>{item.game}</h3>
             <p>{item.detail}</p>
             <p className="price">Rp {item.harga}</p>
+
             {!item.sold && <button className="buy" onClick={()=>buy(item)}>BELI AKUN 🔥</button>}
             {item.sold && <div className="soldBadge">SOLD ❌</div>}
+
             {isSeller && loginAs === item.seller && (
               <div className="adminBtn">
                 {!item.sold && <button className="soldBtn" onClick={()=>markSold(item.id)}>SOLD</button>}
