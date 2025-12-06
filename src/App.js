@@ -1,7 +1,7 @@
 import "./styles.css";
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 const sellers = {
   WANZ: { phone: "62881027154473", pass: "wanz123" },
@@ -16,16 +16,26 @@ export default function App() {
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
   const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // Ambil data Firestore
   useEffect(() => {
-    const data = localStorage.getItem("stok");
-    if (data) setList(JSON.parse(data));
+    const fetchData = async () => {
+      try {
+        const snap = await getDocs(collection(db, "accounts"));
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setList(data);
+        console.log("Data Firestore:", data);
+      } catch (err) {
+        console.error("Gagal fetch Firestore:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("stok", JSON.stringify(list));
-  }, [list]);
-
+  // Login admin / seller
   const login = () => {
     if (loginAs === "VIEWER") return;
     if (!sellers[loginAs] || password !== sellers[loginAs].pass) {
@@ -40,26 +50,44 @@ export default function App() {
     setPassword("");
   };
 
-  const tambah = () => {
+  // Tambah akun
+  const tambah = async () => {
     if (!game || !detail || !harga) return alert("Lengkapi data!");
-    setList([
-      { id: Date.now(), game, detail, harga, seller: loginAs, sold: false },
-      ...list,
-    ]);
+    const newItem = { game, detail, harga, seller: loginAs, sold: false };
+
+    try {
+      const docRef = await addDoc(collection(db, "accounts"), newItem);
+      setList([{ id: docRef.id, ...newItem }, ...list]);
+    } catch (err) {
+      console.error("Gagal menambah akun:", err);
+      alert("Gagal menambah akun");
+    }
+
     setGame(""); setDetail(""); setHarga("");
   };
 
-  const markSold = (id) => {
-    setList(list.map(item =>
-      item.id === id ? { ...item, sold: true } : item
-    ));
+  // Tandai sold
+  const markSold = async (id) => {
+    try {
+      await updateDoc(doc(db, "accounts", id), { sold: true });
+      setList(list.map(item => item.id === id ? { ...item, sold: true } : item));
+    } catch (err) {
+      console.error("Gagal mark sold:", err);
+    }
   };
 
-  const hapus = (id) => {
+  // Hapus akun
+  const hapus = async (id) => {
     if (!window.confirm("Hapus stok ini?")) return;
-    setList(list.filter(item => item.id !== id));
+    try {
+      await deleteDoc(doc(db, "accounts", id));
+      setList(list.filter(item => item.id !== id));
+    } catch (err) {
+      console.error("Gagal hapus akun:", err);
+    }
   };
 
+  // Buy akun (open WhatsApp)
   const buy = (item) => {
     if (item.sold) return;
     const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
@@ -68,6 +96,9 @@ export default function App() {
       "_blank"
     );
   };
+
+  // Loading Firestore
+  if (loading) return <div style={{ padding: "20px" }}>Loading...</div>;
 
   /* LOGIN PAGE */
   if (!loginAs) {
@@ -81,7 +112,7 @@ export default function App() {
           <option>GIO</option>
           <option value="VIEWER">BUYER</option>
         </select>
-        {loginAs !== "VIEWER" && (
+        {loginAs !== "VIEWER" && loginAs && (
           <input
             type="password"
             placeholder="Password"
@@ -94,6 +125,7 @@ export default function App() {
     );
   }
 
+  // Halaman utama
   return (
     <>
       <header>
@@ -125,15 +157,11 @@ export default function App() {
               </button>
             )}
 
-            {item.sold && (
-              <div className="soldBadge">SOLD ❌</div>
-            )}
+            {item.sold && <div className="soldBadge">SOLD ❌</div>}
 
             {loginAs === item.seller && (
               <div className="adminBtn">
-                {!item.sold && (
-                  <button className="soldBtn" onClick={()=>markSold(item.id)}>SOLD</button>
-                )}
+                {!item.sold && <button className="soldBtn" onClick={()=>markSold(item.id)}>SOLD</button>}
                 <button className="delBtn" onClick={()=>hapus(item.id)}>DELETE</button>
               </div>
             )}
