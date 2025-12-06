@@ -57,8 +57,14 @@ export default function App() {
 
   const tambah = async () => {
     if (!game || !detail || !harga) return alert("Lengkapi data!");
-
-    const newItem = { game, detail, harga, seller: loginAs, sold: false, foto: fotoLink };
+    const newItem = {
+      game,
+      detail,
+      harga,
+      seller: loginAs,
+      sold: false,
+      foto: fotoLink, // langsung pakai link
+    };
 
     try {
       const docRef = await addDoc(collection(db, "accounts"), newItem);
@@ -68,7 +74,10 @@ export default function App() {
       alert("Gagal menambah akun");
     }
 
-    setGame(""); setDetail(""); setHarga(""); setFotoLink("");
+    setGame(""); 
+    setDetail(""); 
+    setHarga(""); 
+    setFotoLink(""); // reset link
   };
 
   const markSold = async (id) => {
@@ -146,9 +155,9 @@ export default function App() {
           <input placeholder="Game" value={game} onChange={(e)=>setGame(e.target.value)} />
           <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
           <input placeholder="Harga" value={harga} onChange={(e)=>setHarga(e.target.value)} />
-          <input
-            type="text"
-            placeholder="Link Foto (URL)"
+          <input 
+            type="text" 
+            placeholder="Link gambar"
             value={fotoLink}
             onChange={(e) => setFotoLink(e.target.value)}
           />
@@ -179,4 +188,4 @@ export default function App() {
       </div>
     </>
   );
-        }
+              }
