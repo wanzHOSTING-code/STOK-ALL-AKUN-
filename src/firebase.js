@@ -1,18 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getStorage } from "firebase/storage"
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDNZm2wnMwTiBDc6Q6bSHETTqyMK76BvLQ",
-  authDomain: "stok-akun-789c3.firebaseapp.com",
-  projectId: "stok-akun-789c3",
-  storageBucket: "stok-akun-789c3.appspot.com",
-  messagingSenderId: "931036833340",
-  appId: "1:931036833340:web:27be67f802bee512e00539"
+  apiKey: "AIzaSyDE3zLMmEAX6ICTB4d057L7W-v6lZZsPNI",
+  authDomain: "market-jb.firebaseapp.com",
+  projectId: "market-jb",
+  storageBucket: "market-jb.firebasestorage.app",
+  messagingSenderId: "881645854044",
+  appId: "1:881645854044:web:f601e1597b192ee1ed7599"
 };
 
 const app = initializeApp(firebaseConfig);
-
-// ✅ INI YANG SERING KURANG
 export const db = getFirestore(app);
-export const storage = getStorage(app);
