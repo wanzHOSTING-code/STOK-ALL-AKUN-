@@ -11,9 +11,9 @@ const sellers = {
 
 export default function App() {
   const [loginAs, setLoginAs] = useState("BUYER"); // default buyer
-  const [selectedRole, setSelectedRole] = useState(""); // role di form login
   const [password, setPassword] = useState("");
-  const [showLoginForm, setShowLoginForm] = useState(false); // toggle form admin
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(""); // pilih role sebelum login
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
@@ -42,17 +42,17 @@ export default function App() {
       alert("Login gagal");
       return;
     }
-    setLoginAs(selectedRole);
+    setLoginAs(selectedRole); // login berhasil
     setShowLoginForm(false);
-    setSelectedRole("");
     setPassword("");
+    setSelectedRole("");
     alert(`Login sebagai ${selectedRole}`);
   };
 
-  // Logout seller
   const logout = () => {
-    setLoginAs("BUYER");
+    setLoginAs("BUYER"); // kembali ke buyer
     setPassword("");
+    setSelectedRole("");
   };
 
   // Tambah akun
@@ -127,8 +127,15 @@ export default function App() {
 
       {/* Form login admin/seller muncul di bawah header */}
       {showLoginForm && !isSeller && (
-        <div className="login adminLogin">
-          <img src="/logo.png" alt="logo" className="loginLogo" />
+        <div className="login">
+          {/* Logo di atas */}
+<img src="/logo.png" alt="logo" style={{
+  width: "80px",
+  height: "80px",
+  borderRadius: "50%",
+  border: "3px solid #5fa8ff",
+  marginBottom: "12px"
+}} />
 
           <select onChange={(e) => setSelectedRole(e.target.value)} value={selectedRole}>
             <option value="">Pilih Role</option>
