@@ -6,8 +6,19 @@
 }
 
 body {
-  background: radial-gradient(circle at top, #101c4a, #050814);
   color: #fff;
+
+  /* Gradient dasar + gambar tema gaming */
+  background: radial-gradient(circle at top, #101c4a, #050814);
+  background-image:
+    url('https://i.ibb.co/KzsS4ztL'), 
+    url('https://i.ibb.co/60HZ9h2R'),
+    url('https://i.ibb.co/4ZC5JnVf'),
+    url('https://i.ibb.co/4ZC5JnVf');
+  background-repeat: no-repeat;
+  background-position: top left, top right, bottom left, bottom right;
+  background-size: 100px 100px, 120px 120px, 100px 100px, 100px 100px;
+  background-blend-mode: lighten;
 }
 
 /* HEADER */
@@ -90,6 +101,18 @@ header h1 {
   opacity: .9;
 }
 
+.card img.cardImg {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.cardPreview {
+  width: 100px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
 .price {
   margin-top: 6px;
   color: #7bb1ff;
@@ -128,6 +151,7 @@ header h1 {
   transform: scale(1.03);
 }
 
+/* LOGIN */
 .login {
   min-height: 100vh;
   display: flex;
@@ -214,100 +238,20 @@ header h1 {
   color: #fff;
 }
 
-.login {
-  position: absolute;
-  top: 80px; /* tepat di bawah header */
-  left: 50%;
-  transform: translateX(-50%);
-  background: #0d173a;
-  padding: 15px 20px;
+/* GRUP JB */
+.groupBtn {
+  width: 200px;
+  padding: 12px;
   border-radius: 12px;
-  border: 1px solid #2f4fb8;
-  box-shadow: 0 0 20px rgba(77,163,255,.3);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  z-index: 1000;
-}
-
-.login select,
-.login input {
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid #2f4fb8;
-  background: #0d173a;
-  color: #fff;
-  font-size: 13px;
-}
-
-.login button {
-  padding: 8px 14px;
-  border-radius: 8px;
   border: none;
-  background: linear-gradient(135deg, #2ee6a6, #00b8ff);
+  background-color: #00c853;
   font-weight: bold;
   cursor: pointer;
-  font-size: 13px;
+  margin: 15px auto;
+  display: block;
 }
 
-.login button:hover {
-  box-shadow: 0 0 12px #00ffd5;
-}
-
-/* PREVIEW GAMBAR DI FORM */
-.cardPreview {
-  width: 100%;
-  max-width: 150px;
-  height: auto;
-  border-radius: 12px;
-  margin-top: 10px;
-  border: 2px solid #00b8ff;
-  box-shadow: 0 0 15px rgba(77, 163, 255, 0.5);
-}
-
-/* GAMBAR DI CARD */
-.cardImg {
-  width: 100%;
-  height: auto;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  border: 1px solid #3b5bdb;
-  box-shadow: 0 0 20px rgba(77, 163, 255, 0.3);
-  object-fit: cover;
-}
-
-/* Sesuaikan tinggi maksimal agar card tidak terlalu panjang */
-.card {
-  display: flex;
-  flex-direction: column;
-}
-
-.cardImg {
-  max-height: 200px;
-}
-
-.grupJB {
-  margin-left: 10px;
-  background: linear-gradient(135deg, #ffcc00, #ff7a00);
-  border: none;
-  border-radius: 12px;
-  padding: 8px 12px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.grupJB {
-  background-color: #28a745; /* hijau */
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  margin-left: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background 0.2s;
-}
-
-.grupJB:hover {
-  background-color: #218838; /* hijau gelap saat hover */
+.groupBtn:hover {
+  box-shadow: 0 0 15px #00ff70;
+  transform: scale(1.05);
 }
