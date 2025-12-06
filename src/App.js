@@ -10,14 +10,14 @@ const sellers = {
 };
 
 export default function App() {
-  const [loginAs, setLoginAs] = useState("BUYER"); // default buyer
+  const [loginAs, setLoginAs] = useState("BUYER");
   const [password, setPassword] = useState("");
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(""); // pilih role sebelum login
+  const [selectedRole, setSelectedRole] = useState("");
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
-  const [fotoURL, setFotoURL] = useState("");
+  const [fotoLink, setFotoLink] = useState("");
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +37,6 @@ export default function App() {
     fetchData();
   }, []);
 
-  // Login seller
   const login = () => {
     if (!sellers[selectedRole] || password !== sellers[selectedRole].pass) {
       alert("Login gagal");
@@ -56,11 +55,9 @@ export default function App() {
     setSelectedRole("");
   };
 
-  // Tambah akun
   const tambah = async () => {
-    if (!game || !detail || !harga || !fotoURL) return alert("Lengkapi data!");
-    const newItem = { game, detail, harga, seller: loginAs, sold: false, foto: fotoURL };
-
+    if (!game || !detail || !harga) return alert("Lengkapi data!");
+    const newItem = { game, detail, harga, seller: loginAs, sold: false, foto: fotoLink };
     try {
       const docRef = await addDoc(collection(db, "accounts"), newItem);
       setList([{ id: docRef.id, ...newItem }, ...list]);
@@ -68,11 +65,9 @@ export default function App() {
       console.error("Gagal menambah akun:", err);
       alert("Gagal menambah akun");
     }
-
-    setGame(""); setDetail(""); setHarga(""); setFotoURL("");
+    setGame(""); setDetail(""); setHarga(""); setFotoLink("");
   };
 
-  // Tandai sold
   const markSold = async (id) => {
     try {
       await updateDoc(doc(db, "accounts", id), { sold: true });
@@ -82,7 +77,6 @@ export default function App() {
     }
   };
 
-  // Hapus akun
   const hapus = async (id) => {
     if (!window.confirm("Hapus stok ini?")) return;
     try {
@@ -93,10 +87,14 @@ export default function App() {
     }
   };
 
-  // Buy akun (WhatsApp)
   const buy = (item) => {
     if (item.sold) return;
-    const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
+
+    let msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
+    if (item.foto) {
+      msg += `\n🖼️ [LIHAT FOTO AKUN](${item.foto})`;
+    }
+
     window.open(
       `https://wa.me/${sellers[item.seller].phone}?text=${encodeURIComponent(msg)}`,
       "_blank"
@@ -123,7 +121,7 @@ export default function App() {
       {/* Form login admin/seller */}
       {showLoginForm && !isSeller && (
         <div className="login adminLogin">
-          <img src="/logo.png" alt="logo" className="loginLogo" style={{
+          <img src="/logo.png" alt="logo" style={{
             width: "80px", height: "80px", borderRadius: "50%", border: "3px solid #5fa8ff", marginBottom: "12px"
           }} />
           <select onChange={(e) => setSelectedRole(e.target.value)} value={selectedRole}>
@@ -151,11 +149,10 @@ export default function App() {
           <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
           <input placeholder="Harga" value={harga} onChange={(e)=>setHarga(e.target.value)} />
           <input 
-            placeholder="Link Foto" 
-            value={fotoURL} 
-            onChange={(e)=>setFotoURL(e.target.value)} 
+            placeholder="Link foto akun"
+            value={fotoLink}
+            onChange={(e) => setFotoLink(e.target.value)}
           />
-          {fotoURL && <img src={fotoURL} alt="Preview" className="cardPreview" />}
           <button onClick={tambah}>+ TAMBAH</button>
         </div>
       )}
@@ -182,4 +179,4 @@ export default function App() {
       </div>
     </>
   );
-        }
+          }
