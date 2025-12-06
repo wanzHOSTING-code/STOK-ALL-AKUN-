@@ -172,3 +172,44 @@ header h1 {
   padding: 6px 10px;
   border-radius: 8px;
 }
+
+.sold {
+  opacity: 0.6;
+  filter: grayscale(1);
+}
+
+.soldBadge {
+  margin-top: 8px;
+  background: red;
+  color: #fff;
+  text-align: center;
+  padding: 8px;
+  border-radius: 10px;
+  font-weight: 900;
+}
+
+.adminBtn {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.soldBtn {
+  flex: 1;
+  background: #00c853;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.delBtn {
+  flex: 1;
+  background: #d50000;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  font-weight: bold;
+  color: #fff;
+}
