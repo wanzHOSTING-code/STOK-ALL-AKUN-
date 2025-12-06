@@ -10,14 +10,14 @@ const sellers = {
 };
 
 export default function App() {
-  const [loginAs, setLoginAs] = useState("BUYER");
+  const [loginAs, setLoginAs] = useState("BUYER"); // default buyer
   const [password, setPassword] = useState("");
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedRole, setSelectedRole] = useState(""); // pilih role sebelum login
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
-  const [fotoLink, setFotoLink] = useState("");
+  const [fotoLink, setFotoLink] = useState(""); // gunakan link gambar
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +37,7 @@ export default function App() {
     fetchData();
   }, []);
 
+  // Login seller
   const login = () => {
     if (!sellers[selectedRole] || password !== sellers[selectedRole].pass) {
       alert("Login gagal");
@@ -55,9 +56,11 @@ export default function App() {
     setSelectedRole("");
   };
 
+  // Tambah akun
   const tambah = async () => {
     if (!game || !detail || !harga) return alert("Lengkapi data!");
     const newItem = { game, detail, harga, seller: loginAs, sold: false, foto: fotoLink };
+
     try {
       const docRef = await addDoc(collection(db, "accounts"), newItem);
       setList([{ id: docRef.id, ...newItem }, ...list]);
@@ -65,9 +68,11 @@ export default function App() {
       console.error("Gagal menambah akun:", err);
       alert("Gagal menambah akun");
     }
+
     setGame(""); setDetail(""); setHarga(""); setFotoLink("");
   };
 
+  // Tandai sold
   const markSold = async (id) => {
     try {
       await updateDoc(doc(db, "accounts", id), { sold: true });
@@ -77,6 +82,7 @@ export default function App() {
     }
   };
 
+  // Hapus akun
   const hapus = async (id) => {
     if (!window.confirm("Hapus stok ini?")) return;
     try {
@@ -87,14 +93,10 @@ export default function App() {
     }
   };
 
+  // Buy akun (WhatsApp)
   const buy = (item) => {
     if (item.sold) return;
-
-    let msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
-    if (item.foto) {
-      msg += `\n🖼️ [LIHAT FOTO AKUN](${item.foto})`;
-    }
-
+    const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}\n🖼 ${item.foto}`;
     window.open(
       `https://wa.me/${sellers[item.seller].phone}?text=${encodeURIComponent(msg)}`,
       "_blank"
@@ -112,10 +114,21 @@ export default function App() {
         <h1>
           STOK AKUN<br />WANZ × DAEN × GIO
         </h1>
+
         {!isSeller && (
-          <button className="logout" onClick={() => setShowLoginForm(!showLoginForm)}>ADMIN</button>
+          <button className="logout" onClick={() => setShowLoginForm(!showLoginForm)}>
+            ADMIN
+          </button>
         )}
         {isSeller && <button className="logout" onClick={logout}>LOGOUT</button>}
+
+        {/* Tombol Grup JB */}
+        <button
+          className="grupJB"
+          onClick={() => window.open("https://chat.whatsapp.com/LoRrsGDTv2N30zwxQGoiKo?mode=hqrc", "_blank")}
+        >
+          Grup JB
+        </button>
       </header>
 
       {/* Form login admin/seller */}
@@ -149,9 +162,9 @@ export default function App() {
           <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
           <input placeholder="Harga" value={harga} onChange={(e)=>setHarga(e.target.value)} />
           <input 
-            placeholder="Link foto akun"
+            placeholder="Link Gambar"
             value={fotoLink}
-            onChange={(e) => setFotoLink(e.target.value)}
+            onChange={(e)=>setFotoLink(e.target.value)}
           />
           <button onClick={tambah}>+ TAMBAH</button>
         </div>
@@ -179,4 +192,4 @@ export default function App() {
       </div>
     </>
   );
-          }
+        }
