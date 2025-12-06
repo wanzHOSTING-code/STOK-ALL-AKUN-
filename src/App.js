@@ -12,6 +12,7 @@ const sellers = {
 export default function App() {
   const [loginAs, setLoginAs] = useState("BUYER"); // default buyer
   const [password, setPassword] = useState("");
+  const [showLoginForm, setShowLoginForm] = useState(false); // toggle form admin
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
@@ -41,10 +42,11 @@ export default function App() {
       return;
     }
     alert(`Login sebagai ${loginAs}`);
+    setShowLoginForm(false); // tutup form setelah login
   };
 
   const logout = () => {
-    setLoginAs("BUYER"); // kembali ke mode buyer
+    setLoginAs("BUYER"); // kembali ke buyer
     setPassword("");
   };
 
@@ -103,14 +105,24 @@ export default function App() {
     <>
       <header>
         <img src="/logo.png" alt="logo" />
-        <h1>STOK AKUN<br />WANZ × DAEN × GIO</h1>
-        {isSeller && <button className="logout" onClick={logout}>LOGOUT</button>}
+        <h1>
+          STOK AKUN<br />WANZ × DAEN × GIO
+        </h1>
+
+        {/* Tombol ADMIN / LOGOUT */}
+        {!isSeller && (
+          <button className="logout" onClick={() => setShowLoginForm(!showLoginForm)}>
+            ADMIN
+          </button>
+        )}
+        {isSeller && (
+          <button className="logout" onClick={logout}>LOGOUT</button>
+        )}
       </header>
 
-      {/* Login seller */}
-      {!isSeller && (
+      {/* Form login muncul di bawah header saat tombol ADMIN diklik */}
+      {showLoginForm && !isSeller && (
         <div className="login">
-          <h2>SELLER LOGIN</h2>
           <select onChange={(e) => setLoginAs(e.target.value)}>
             <option value="">Pilih Role</option>
             <option>WANZ</option>
@@ -127,7 +139,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Form tambah akun */}
+      {/* Form tambah akun hanya untuk seller */}
       {isSeller && (
         <div className="form">
           <input placeholder="Game" value={game} onChange={(e)=>setGame(e.target.value)} />
@@ -137,7 +149,7 @@ export default function App() {
         </div>
       )}
 
-      {/* List akun */}
+      {/* List akun tampil untuk semua */}
       <div className="list">
         {list.map((item)=>(
           <div className={`card ${item.sold ? "sold" : ""}`} key={item.id}>
@@ -161,4 +173,4 @@ export default function App() {
       </div>
     </>
   );
-                                                                                 }
+        }
