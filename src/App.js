@@ -2,9 +2,9 @@ import "./styles.css";
 import { useState } from "react";
 
 const sellers = {
-  DAEN: "6283133581399",
-  GIO: "6285715635425",
   WANZ: "62881027154473",
+  GIO: "6285715635425",
+  DAEN: "6283133581399",
 };
 
 export default function App() {
