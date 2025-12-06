@@ -1,8 +1,7 @@
 import "./styles.css";
 import { useState, useEffect } from "react";
-import { db, storage } from "./firebase";
+import { db } from "./firebase";
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const sellers = {
   WANZ: { phone: "62881027154473", pass: "wanz123" },
@@ -18,8 +17,7 @@ export default function App() {
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
-  const [fotoFile, setFotoFile] = useState(null);
-  const [fotoPreview, setFotoPreview] = useState("");
+  const [fotoLink, setFotoLink] = useState(""); // pakai link
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,14 +58,7 @@ export default function App() {
   const tambah = async () => {
     if (!game || !detail || !harga) return alert("Lengkapi data!");
 
-    let fotoURL = "";
-    if (fotoFile) {
-      const storageRef = ref(storage, `accounts/${Date.now()}_${fotoFile.name}`);
-      await uploadBytes(storageRef, fotoFile);
-      fotoURL = await getDownloadURL(storageRef);
-    }
-
-    const newItem = { game, detail, harga, seller: loginAs, sold: false, foto: fotoURL };
+    const newItem = { game, detail, harga, seller: loginAs, sold: false, foto: fotoLink };
 
     try {
       const docRef = await addDoc(collection(db, "accounts"), newItem);
@@ -77,7 +68,7 @@ export default function App() {
       alert("Gagal menambah akun");
     }
 
-    setGame(""); setDetail(""); setHarga(""); setFotoFile(null); setFotoPreview("");
+    setGame(""); setDetail(""); setHarga(""); setFotoLink("");
   };
 
   const markSold = async (id) => {
@@ -155,19 +146,13 @@ export default function App() {
           <input placeholder="Game" value={game} onChange={(e)=>setGame(e.target.value)} />
           <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
           <input placeholder="Harga" value={harga} onChange={(e)=>setHarga(e.target.value)} />
-          <input 
-            type="file" 
-            accept="image/*" 
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (!file) return;
-              setFotoFile(file);
-              const reader = new FileReader();
-              reader.onload = () => setFotoPreview(reader.result);
-              reader.readAsDataURL(file);
-            }}
+          <input
+            type="text"
+            placeholder="Link Foto (URL)"
+            value={fotoLink}
+            onChange={(e) => setFotoLink(e.target.value)}
           />
-          {fotoPreview && <img src={fotoPreview} alt="Preview" className="cardPreview" />}
+          {fotoLink && <img src={fotoLink} alt="Preview" className="cardPreview" />}
           <button onClick={tambah}>+ TAMBAH</button>
         </div>
       )}
