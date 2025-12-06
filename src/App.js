@@ -1,142 +1,117 @@
 import "./styles.css";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { db } from "./firebase";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 
 const sellers = {
-  WANZ: "62881027154473",
-  GIO: "6285715635425",
-  DAEN: "6283133581399",
+  WANZ: { phone: "62881027154473", pass: "wanz123" },
+  DAEN: { phone: "6283133581399", pass: "daen123" },
+  GIO:  { phone: "6285715635425", pass: "gio123" },
 };
 
 export default function App() {
-  // === ADMIN LOGIN STATE ===
-  const [isAdmin, setIsAdmin] = useState(
-    localStorage.getItem("admin") === "true"
-  );
-  const [username, setUsername] = useState("");
+  const [loginAs, setLoginAs] = useState(null);
   const [password, setPassword] = useState("");
-
-  // === ACCOUNT STATE ===
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
-  const [seller, setSeller] = useState("DAEN");
   const [list, setList] = useState([]);
 
-  // === FETCH FIRESTORE ===
-  const fetchData = async () => {
-    const snap = await getDocs(collection(db, "accounts"));
-    const data = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
-    setList(data);
-  };
-
+  /* load data */
   useEffect(() => {
-    fetchData();
+    const data = localStorage.getItem("stok");
+    if (data) setList(JSON.parse(data));
   }, []);
 
-  // === LOGIN ===
-  const loginAdmin = () => {
-    if (username === ADMIN.username && password === ADMIN.password) {
-      setIsAdmin(true);
-      localStorage.setItem("admin", "true");
-      alert("Login admin berhasil");
-    } else {
-      alert("Username / password salah");
+  useEffect(() => {
+    localStorage.setItem("stok", JSON.stringify(list));
+  }, [list]);
+
+  /* LOGIN */
+  const login = () => {
+    if (!loginAs || password !== sellers[loginAs].pass) {
+      alert("Login gagal");
+      return;
     }
+    alert(`Login sebagai ${loginAs}`);
   };
 
-  const logoutAdmin = () => {
-    setIsAdmin(false);
-    localStorage.removeItem("admin");
+  const logout = () => {
+    setLoginAs(null);
+    setPassword("");
   };
 
-  // === TAMBAH DATA ===
-  const tambah = async () => {
+  /* ADD STOK */
+  const tambah = () => {
     if (!game || !detail || !harga) return alert("Lengkapi data!");
-
-    await addDoc(collection(db, "accounts"), {
-      game,
-      detail,
-      harga,
-      seller,
-      sold: false,
-    });
-
-    setGame("");
-    setDetail("");
-    setHarga("");
-    fetchData();
+    setList([{ game, detail, harga, seller: loginAs }, ...list]);
+    setGame(""); setDetail(""); setHarga("");
   };
 
+  /* BUY */
   const buy = (item) => {
-    const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 Game: ${item.game}\n📌 Detail: ${item.detail}\n💰 Harga: ${item.harga}`;
+    const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
     window.open(
-      `https://wa.me/${sellers[item.seller]}?text=${encodeURIComponent(msg)}`,
+      `https://wa.me/${sellers[item.seller].phone}?text=${encodeURIComponent(msg)}`,
       "_blank"
     );
   };
+
+  /* LOGIN PAGE */
+  if (!loginAs) {
+    return (
+      <div className="login">
+        <h2>SELLER LOGIN</h2>
+        <select onChange={(e) => setLoginAs(e.target.value)}>
+          <option value="">Pilih Seller</option>
+          <option>WANZ</option>
+          <option>DAEN</option>
+          <option>GIO</option>
+        </select>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button onClick={login}>LOGIN</button>
+
+        <p className="viewer">
+          <button onClick={() => setLoginAs("VIEWER")}>
+            Masuk Sebagai Buyer
+          </button>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
       <header>
         <img src="/logo.png" alt="logo" />
-        <h1>
-          STOK AKUN<br />
-          WANZ × DAEN × GIO
-        </h1>
+        <h1>STOK AKUN<br />WANZ × DAEN × GIO</h1>
+        {loginAs !== "VIEWER" && (
+          <button className="logout" onClick={logout}>LOGOUT</button>
+        )}
       </header>
 
-      {/* === LOGIN ADMIN === */}
-      {!isAdmin && (
-        <div className="admin-login">
-          <h2>ADMIN LOGIN</h2>
-          <input
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button onClick={loginAdmin}>LOGIN</button>
-        </div>
-      )}
-
-      {/* === FORM TAMBAH (ADMIN ONLY) === */}
-      {isAdmin && (
+      {loginAs !== "VIEWER" && (
         <div className="form">
-          <input placeholder="Game" value={game} onChange={(e) => setGame(e.target.value)} />
-          <input placeholder="Detail akun" value={detail} onChange={(e) => setDetail(e.target.value)} />
-          <input placeholder="Harga" value={harga} onChange={(e) => setHarga(e.target.value)} />
-
-          <select value={seller} onChange={(e) => setSeller(e.target.value)}>
-            <option>DAEN</option>
-            <option>GIO</option>
-            <option>WANZ</option>
-          </select>
-
+          <input placeholder="Game" value={game} onChange={(e)=>setGame(e.target.value)} />
+          <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
+          <input placeholder="Harga" value={harga} onChange={(e)=>setHarga(e.target.value)} />
           <button onClick={tambah}>+ TAMBAH</button>
-          <button className="logout" onClick={logoutAdmin}>LOGOUT</button>
         </div>
       )}
 
       <div className="list">
-        {list.map((item) => (
-          <div className="card" key={item.id}>
+        {list.map((item, i)=>(
+          <div className="card" key={i}>
             <span className={`badge ${item.seller}`}>{item.seller}</span>
             <h3>{item.game}</h3>
             <p>{item.detail}</p>
             <p className="price">Rp {item.harga}</p>
-            <button className="buy" onClick={() => buy(item)}>
-              BELI AKUN 🔥
-            </button>
+            <button className="buy" onClick={()=>buy(item)}>BELI AKUN 🔥</button>
           </div>
         ))}
       </div>
