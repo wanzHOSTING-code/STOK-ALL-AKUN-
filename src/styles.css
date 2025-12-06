@@ -296,7 +296,18 @@ header h1 {
   cursor: pointer;
 }
 
+.grupJB {
+  background-color: #28a745; /* hijau */
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  margin-left: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
 .grupJB:hover {
-  box-shadow: 0 0 20px #ffc400;
-  transform: scale(1.03);
+  background-color: #218838; /* hijau gelap saat hover */
 }
