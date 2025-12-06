@@ -1,5 +1,6 @@
 import "./styles.css";
 import { db } from "./firebase";
+import { collection, getDocs } from "firebase/firestore";
 import { useState } from "react";
 
 const sellers = {
