@@ -10,7 +10,7 @@ const sellers = {
 };
 
 export default function App() {
-  const [loginAs, setLoginAs] = useState(null);
+  const [loginAs, setLoginAs] = useState("BUYER"); // default buyer
   const [password, setPassword] = useState("");
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
@@ -25,7 +25,6 @@ export default function App() {
         const snap = await getDocs(collection(db, "accounts"));
         const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setList(data);
-        console.log("Data Firestore:", data);
       } catch (err) {
         console.error("Gagal fetch Firestore:", err);
       } finally {
@@ -35,9 +34,8 @@ export default function App() {
     fetchData();
   }, []);
 
-  // Login admin / seller
+  // Login seller
   const login = () => {
-    if (loginAs === "VIEWER") return;
     if (!sellers[loginAs] || password !== sellers[loginAs].pass) {
       alert("Login gagal");
       return;
@@ -46,7 +44,7 @@ export default function App() {
   };
 
   const logout = () => {
-    setLoginAs(null);
+    setLoginAs("BUYER"); // kembali ke mode buyer
     setPassword("");
   };
 
@@ -87,7 +85,7 @@ export default function App() {
     }
   };
 
-  // Buy akun (open WhatsApp)
+  // Buy akun (WhatsApp)
   const buy = (item) => {
     if (item.sold) return;
     const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
@@ -97,44 +95,40 @@ export default function App() {
     );
   };
 
-  // Loading Firestore
   if (loading) return <div style={{ padding: "20px" }}>Loading...</div>;
 
-  /* LOGIN PAGE */
-  if (!loginAs) {
-    return (
-      <div className="login">
-        <h2>SELLER LOGIN</h2>
-        <select onChange={(e) => setLoginAs(e.target.value)}>
-          <option value="">Pilih Role</option>
-          <option>WANZ</option>
-          <option>DAEN</option>
-          <option>GIO</option>
-          <option value="VIEWER">BUYER</option>
-        </select>
-        {loginAs !== "VIEWER" && loginAs && (
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        )}
-        <button onClick={login}>MASUK</button>
-      </div>
-    );
-  }
+  const isSeller = loginAs !== "BUYER";
 
-  // Halaman utama
   return (
     <>
       <header>
         <img src="/logo.png" alt="logo" />
         <h1>STOK AKUN<br />WANZ × DAEN × GIO</h1>
-        <button className="logout" onClick={logout}>LOGOUT</button>
+        {isSeller && <button className="logout" onClick={logout}>LOGOUT</button>}
       </header>
 
-      {loginAs !== "VIEWER" && (
+      {/* Login seller */}
+      {!isSeller && (
+        <div className="login">
+          <h2>SELLER LOGIN</h2>
+          <select onChange={(e) => setLoginAs(e.target.value)}>
+            <option value="">Pilih Role</option>
+            <option>WANZ</option>
+            <option>DAEN</option>
+            <option>GIO</option>
+          </select>
+          {loginAs && <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />}
+          {loginAs && <button onClick={login}>MASUK</button>}
+        </div>
+      )}
+
+      {/* Form tambah akun */}
+      {isSeller && (
         <div className="form">
           <input placeholder="Game" value={game} onChange={(e)=>setGame(e.target.value)} />
           <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
@@ -143,6 +137,7 @@ export default function App() {
         </div>
       )}
 
+      {/* List akun */}
       <div className="list">
         {list.map((item)=>(
           <div className={`card ${item.sold ? "sold" : ""}`} key={item.id}>
@@ -151,15 +146,11 @@ export default function App() {
             <p>{item.detail}</p>
             <p className="price">Rp {item.harga}</p>
 
-            {!item.sold && (
-              <button className="buy" onClick={()=>buy(item)}>
-                BELI AKUN 🔥
-              </button>
-            )}
-
+            {!item.sold && <button className="buy" onClick={()=>buy(item)}>BELI AKUN 🔥</button>}
             {item.sold && <div className="soldBadge">SOLD ❌</div>}
 
-            {loginAs === item.seller && (
+            {/* Admin buttons */}
+            {isSeller && loginAs === item.seller && (
               <div className="adminBtn">
                 {!item.sold && <button className="soldBtn" onClick={()=>markSold(item.id)}>SOLD</button>}
                 <button className="delBtn" onClick={()=>hapus(item.id)}>DELETE</button>
@@ -170,4 +161,4 @@ export default function App() {
       </div>
     </>
   );
-        }
+                                                                                 }
