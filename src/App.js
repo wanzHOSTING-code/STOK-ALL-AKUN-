@@ -17,7 +17,7 @@ export default function App() {
   const [game, setGame] = useState("");
   const [detail, setDetail] = useState("");
   const [harga, setHarga] = useState("");
-  const [fotoLink, setFotoLink] = useState(""); // pakai link
+  const [fotoLink, setFotoLink] = useState(""); // link gambar
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +37,7 @@ export default function App() {
     fetchData();
   }, []);
 
+  // Login seller
   const login = () => {
     if (!sellers[selectedRole] || password !== sellers[selectedRole].pass) {
       alert("Login gagal");
@@ -55,31 +56,32 @@ export default function App() {
     setSelectedRole("");
   };
 
+  // Tambah akun
   const tambah = async () => {
     if (!game || !detail || !harga) return alert("Lengkapi data!");
+
     const newItem = {
       game,
       detail,
       harga,
       seller: loginAs,
       sold: false,
-      foto: fotoLink, // langsung pakai link
+      foto: fotoLink || "", // pakai link
     };
+
+    console.log("Item akan ditambahkan:", newItem); // debug
 
     try {
       const docRef = await addDoc(collection(db, "accounts"), newItem);
       setList([{ id: docRef.id, ...newItem }, ...list]);
+      setGame(""); setDetail(""); setHarga(""); setFotoLink("");
     } catch (err) {
       console.error("Gagal menambah akun:", err);
       alert("Gagal menambah akun");
     }
-
-    setGame(""); 
-    setDetail(""); 
-    setHarga(""); 
-    setFotoLink(""); // reset link
   };
 
+  // Tandai sold
   const markSold = async (id) => {
     try {
       await updateDoc(doc(db, "accounts", id), { sold: true });
@@ -89,6 +91,7 @@ export default function App() {
     }
   };
 
+  // Hapus akun
   const hapus = async (id) => {
     if (!window.confirm("Hapus stok ini?")) return;
     try {
@@ -99,6 +102,7 @@ export default function App() {
     }
   };
 
+  // Buy akun (WhatsApp)
   const buy = (item) => {
     if (item.sold) return;
     const msg = `Halo ${item.seller}, saya mau beli akun:\n\n🎮 ${item.game}\n📌 ${item.detail}\n💰 Rp ${item.harga}`;
@@ -128,7 +132,7 @@ export default function App() {
       {/* Form login admin/seller */}
       {showLoginForm && !isSeller && (
         <div className="login adminLogin">
-          <img src="/logo.png" alt="logo" className="loginLogo" style={{
+          <img src="/logo.png" alt="logo" style={{
             width: "80px", height: "80px", borderRadius: "50%", border: "3px solid #5fa8ff", marginBottom: "12px"
           }} />
           <select onChange={(e) => setSelectedRole(e.target.value)} value={selectedRole}>
@@ -155,13 +159,7 @@ export default function App() {
           <input placeholder="Game" value={game} onChange={(e)=>setGame(e.target.value)} />
           <input placeholder="Detail akun" value={detail} onChange={(e)=>setDetail(e.target.value)} />
           <input placeholder="Harga" value={harga} onChange={(e)=>setHarga(e.target.value)} />
-          <input 
-            type="text" 
-            placeholder="Link gambar"
-            value={fotoLink}
-            onChange={(e) => setFotoLink(e.target.value)}
-          />
-          {fotoLink && <img src={fotoLink} alt="Preview" className="cardPreview" />}
+          <input placeholder="Link Gambar (opsional)" value={fotoLink} onChange={(e)=>setFotoLink(e.target.value)} />
           <button onClick={tambah}>+ TAMBAH</button>
         </div>
       )}
@@ -188,4 +186,4 @@ export default function App() {
       </div>
     </>
   );
-              }
+        }
