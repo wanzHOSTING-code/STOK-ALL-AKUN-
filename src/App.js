@@ -6,7 +6,7 @@ import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase
 const sellers = {
   WANZ: { phone: "62881027154473", pass: "wanz123" },
   DAEN: { phone: "6283133581399", pass: "daen123" },
-  GIO:  { phone: "6285715635425", pass: "gio123" },
+  GIO:  { phone: "62895382137034", pass: "gio123" },
 };
 
 export default function App() {
